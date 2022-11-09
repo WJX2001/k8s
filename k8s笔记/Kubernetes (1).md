@@ -167,7 +167,7 @@ kubeadm 是官方社区推出的一个用于快速部署kubernetes 集群的工�
 - 部署Kubernetes Master
 - 部署容器网络插件
 - 部署Kubernetes Node，将节点加入Kubernetes 集群中
-- 部署Dashboard Web 页面，可视化查看Kubernetes资源
+- 部署Dashboard Web 页面，可视化查看Kubernetes 资源
 
 ## 2.5 准备环境
 
@@ -421,6 +421,8 @@ gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
 http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
 EOF
 
+yum install -y kubelet-1.23.6 kubeadm-1.23.6 kubectl-1.23.6 && systemctl enable kubelet
+
 yum install -y kubelet kubeadm kubectl && systemctl enable kubelet
 ```
 
@@ -429,7 +431,11 @@ yum install -y kubelet kubeadm kubectl && systemctl enable kubelet
 ### 2.7.1 初始化主节点（主节点操作）
 
 ```shell
-kubeadm init --apiserver-advertise-address=192.168.5.3 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.21.1 --service-cidr=10.96.0.0/12 --pod-network-cidr=10.244.0.0/16
+# 所有机器都要敲这个命令
+[root@master:~] rm -rf /etc/containerd/config.toml
+[root@master:~] systemctl restart containerd
+
+kubeadm init --apiserver-advertise-address=192.168.5.3 --image-repository registry.aliyuncs.com/google_containers --kubernetes-version v1.23.6 --service-cidr=10.96.0.0/12 --pod-network-cidr=10.244.0.0/16
 
 mkdir -p $HOME/.kube
 
@@ -438,17 +444,22 @@ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-### 2.7.2 加入主节点以及其余工作节点
+### 2.7.2 加入主节点以及其余工作节点()
+
+![image-20221109141933668](C:\Users\86181\Desktop\新建文件夹\k8s笔记\Kubenetes.assets\image-20221109141933668.png)
 
 ```shell
-kubeadm join 192.168.5.3:6443 --token h0uelc.l46qp29nxscke7f7 \
-        --discovery-token-ca-cert-hash sha256:abc807778e24bff73362ceeb783cc7f6feec96f20b4fd707c3f8e8312294e28f 
+kubeadm join 192.168.5.3:6443 --token 8p4x79.cxdv2og3vkkuc2xj \
+	--discovery-token-ca-cert-hash sha256:97b733baf53ce06140ba149e1df960bd44b63fbf10e35163cac85bc6091ece7f 
 ```
 
 ### 2.7.3 部署网络
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+# 如果没下载，就从下面的文件手动导入
+kubectl apply -f kube-flannel.yml
 ```
 
 下边是文件
